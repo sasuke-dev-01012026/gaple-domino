@@ -1,23 +1,689 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
-
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sasuke Official Gallery — AI Anime Art">
-  <meta property="og:title" content="Sasuke Official Gallery">
-  <meta property="og:description" content="AI Anime Gallery — One Piece · Naruto">
-  <title>Sasuke Official Gallery</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Gaple Score</title>
+<style>
+  :root{
+    --felt-dark:#0f3d2e;
+    --felt:#155c42;
+    --felt-light:#1c7350;
+    --tile:#f4efe2;
+    --tile-shadow:rgba(0,0,0,.35);
+    --ink:#20261f;
+    --ink-soft:#5b6259;
+    --win:#2f9e5c;
+    --win-bg:#e3f6ea;
+    --lose:#c1443a;
+    --lose-bg:#fbe6e3;
+    --neutral:#8a8f86;
+    --neutral-bg:#eceae2;
+    --gold:#c99a2e;
+    --radius:14px;
+    --gap:14px;
+  }
+  *{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent; /* hilangkan highlight biru muda bawaan browser saat tap */
+  }
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(circle at 20% 0%, var(--felt-light), transparent 55%),
+      var(--felt-dark);
+    color:var(--tile);
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:20px 16px 60px;}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=ABeeZee:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/main.css">
+  /* domino pip mark used as brand motif */
+  .brand{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:22px;
+  }
+  .brand-tile{
+    width:32px;height:50px;background:var(--tile);border-radius:6px;
+    position:relative;box-shadow:0 3px 0 var(--tile-shadow);
+    flex-shrink:0;
+  }
+  .brand-tile::before{
+    content:"";position:absolute;left:50%;top:50%;width:22px;height:1px;background:var(--ink);
+    opacity:.25;transform:translate(-50%,-50%);
+  }
+  .brand-tile::after{
+    content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ink);
+    top:12px;left:12px;box-shadow:14px 0 0 var(--ink), 0 24px 0 var(--ink), 14px 24px 0 var(--ink);
+  }
+  .brand h1{font-size:22px;margin:0;letter-spacing:.2px;color:var(--tile);}
+  .brand span{display:block;font-size:12.5px;color:rgba(244,239,226,.65);margin-top:1px;}
+
+  .card{
+    background:var(--tile);
+    color:var(--ink);
+    border-radius:var(--radius);
+    padding:18px 16px;
+    margin-bottom:var(--gap);
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+  }
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--ink);}
+
+  label.field{display:block;margin-bottom:14px;}
+  label.field span{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text], input[type=number]{
+    width:100%;padding:10px 11px;border-radius:9px;border:1.5px solid #ddd6c4;
+    font-size:16px;background:#fffdf8;color:var(--ink);
+  }
+  input[type=text]:focus, input[type=number]:focus{outline:none;border-color:var(--felt);}
+
+  .round-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .round-chip{
+    padding:8px 14px;border-radius:999px;border:1.5px solid #ddd6c4;background:#fffdf8;
+    font-size:14px;font-weight:600;color:var(--ink-soft);cursor:pointer;
+  }
+  .round-chip.active{background:var(--felt);border-color:var(--felt);color:#fff;}
+
+  button{
+    font-family:inherit;cursor:pointer;border:none;
+  }
+  .btn-primary{
+    width:100%;padding:14px;border-radius:11px;background:var(--felt);color:#fff;
+    font-size:16px;font-weight:700;letter-spacing:.3px;box-shadow:0 6px 0 var(--felt-dark);
+    transition:transform .05s;
+  }
+  .btn-primary:active{transform:translateY(4px);box-shadow:0 2px 0 var(--felt-dark);}
+  .btn-primary:disabled{background:#b9c4bc;box-shadow:0 6px 0 #97a19a;cursor:not-allowed;}
+  .btn-secondary{
+    width:100%;padding:12px;border-radius:11px;background:#fff;color:var(--felt-dark);
+    font-size:14.5px;font-weight:700;border:2px solid var(--felt-dark);
+  }
+  .btn-ghost{
+    width:100%;padding:10px;border-radius:11px;background:transparent;color:rgba(244,239,226,.75);
+    font-size:13.5px;font-weight:600;text-decoration:underline;
+  }
+
+  /* round header */
+  .round-pill{
+    display:inline-flex;align-items:center;gap:8px;background:rgba(244,239,226,.12);
+    padding:5px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--tile);
+    margin-bottom:16px;letter-spacing:.3px;
+  }
+  .round-pill b{color:var(--gold);}
+
+  .player-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 4px;border-bottom:1px solid #ece6d5;
+  }
+  .player-row:last-child{border-bottom:none;}
+  .player-name{font-weight:700;font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .status-btns{display:flex;gap:6px;flex-shrink:0;}
+  .status-btn{
+    width:42px;height:42px;border-radius:9px;font-size:19px;background:#fffdf8;
+    border:1.5px solid #ddd6c4;display:flex;align-items:center;justify-content:center;
+    transition:.12s;
+  }
+  .status-btn.win.active{background:var(--win-bg);border-color:var(--win);}
+  .status-btn.lose.active{background:var(--lose-bg);border-color:var(--lose);}
+  .status-btn.neutral.active{background:var(--neutral-bg);border-color:var(--neutral);}
+
+  .validation-msg{
+    font-size:13px;text-align:center;padding:10px;border-radius:10px;margin-bottom:12px;
+    background:var(--lose-bg);color:var(--lose);font-weight:600;
+  }
+  .validation-msg.ok{background:var(--win-bg);color:var(--win);}
+
+  /* scoreboard */
+  table{width:100%;border-collapse:collapse;}
+  thead th{
+    text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:700;
+    padding:0 4px 8px;border-bottom:2px solid #ece6d5;
+  }
+  tbody td{padding:10px 4px;font-size:14px;border-bottom:1px solid #f1ecdf;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.score-cell{font-weight:800;}
+  td.score-cell.pos{color:var(--win);}
+  td.score-cell.neg{color:var(--lose);}
+  td.score-cell.zero{color:var(--ink-soft);}
+  th.num, td.num{text-align:center;}
+
+  /* history */
+  .history-item{
+    padding:12px 0;border-bottom:1px solid #f1ecdf;
+  }
+  .history-item:last-child{border-bottom:none;}
+  .history-title{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;}
+  .history-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+  .history-entry{display:flex;align-items:center;gap:6px;font-size:13.5px;}
+  .history-tag{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:700;}
+  .history-tag.win{background:var(--win-bg);color:var(--win);}
+  .history-tag.lose{background:var(--lose-bg);color:var(--lose);}
+  .history-tag.neutral{background:var(--neutral-bg);color:var(--neutral-bg-txt,#7a7f75);}
+
+  /* final result */
+  .rank-card{
+    display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;
+    background:#fffdf8;border:1.5px solid #ece6d5;margin-bottom:10px;
+  }
+  .rank-card.top{background:linear-gradient(135deg,#fff7e0,#fef0c7);border-color:var(--gold);}
+  .rank-medal{font-size:26px;width:36px;text-align:center;flex-shrink:0;}
+  .rank-info{flex:1;min-width:0;}
+  .rank-name{font-weight:800;font-size:16px;}
+  .rank-stats{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .rank-score{font-size:20px;font-weight:800;flex-shrink:0;}
+  .rank-score.pos{color:var(--win);}
+  .rank-score.neg{color:var(--lose);}
+  .rank-score.zero{color:var(--ink-soft);}
+  .tie-note{font-size:11px;color:var(--gold);font-weight:700;margin-top:2px;}
+
+  .resume-box{text-align:center;color:var(--tile);}
+  .resume-box p{font-size:14px;color:rgba(244,239,226,.8);margin-bottom:18px;line-height:1.5;}
+  .btn-stack{display:flex;flex-direction:column;gap:10px;}
+
+  .screen{display:none;}
+  .screen.visible{display:block;}
+
+  @media (min-width:600px){
+    .wrap{padding-top:34px;}
+  }
+</style>
 </head>
-
 <body>
-  <div id="root"></div>
-  <script type="module" src="./js/app.js"></script>
-</body>
+<div class="wrap">
 
+  <div class="brand">
+    <div class="brand-tile"></div>
+    <div>
+      <h1>Gaple Score</h1>
+      <span>Di buat dengan penuh cinta &amp; kasih sayang by Sasuke</span>
+    </div>
+  </div>
+
+  <!-- RESUME SCREEN -->
+  <section id="screen-resume" class="screen">
+    <div class="card resume-box" style="background:rgba(244,239,226,.08);color:var(--tile);box-shadow:none;">
+      <h2 style="color:var(--tile);">Ada game yang belum selesai</h2>
+      <p>Kami menemukan permainan yang sedang berjalan. Lanjutkan dari ronde terakhir, atau mulai game baru dan hapus data sebelumnya.</p>
+      <div class="btn-stack">
+        <button class="btn-primary" onclick="resumeGame()">LANJUTKAN GAME</button>
+        <button class="btn-secondary" style="background:transparent;color:var(--tile);border-color:rgba(244,239,226,.5);" onclick="confirmNewFromResume()">NEW GAME</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP SCREEN -->
+  <section id="screen-setup" class="screen">
+    <div class="card">
+      <h2>Nama Pemain</h2>
+      <label class="field"><span>Pemain 1</span><input type="text" id="input-name-0" placeholder="Nama Pemain 1" required></label>
+      <label class="field"><span>Pemain 2</span><input type="text" id="input-name-1" placeholder="Nama Pemain 2" required></label>
+      <label class="field"><span>Pemain 3</span><input type="text" id="input-name-2" placeholder="Nama Pemain 3" required></label>
+      <label class="field" style="margin-bottom:0;"><span>Pemain 4</span><input type="text" id="input-name-3" placeholder="Nama Pemain 4" required></label>
+    </div>
+
+    <div class="card">
+      <h2>Jumlah Ronde</h2>
+      <div class="round-options" id="round-options">
+        <div class="round-chip" data-rounds="5">5 Ronde</div>
+        <div class="round-chip" data-rounds="10">10 Ronde</div>
+        <div class="round-chip" data-rounds="15">15 Ronde</div>
+      </div>
+      <label class="field" style="margin-bottom:0;">
+        <span>Atau masukkan jumlah custom</span>
+        <input type="number" id="input-custom-rounds" min="1" max="200" placeholder="Contoh: 8">
+      </label>
+    </div>
+
+    <button class="btn-primary" onclick="startGame()">MULAI GAME</button>
+  </section>
+
+  <!-- PLAYING SCREEN -->
+  <section id="screen-playing" class="screen">
+    <div class="round-pill">RONDE <b id="round-current">1</b> / <span id="round-total">10</span></div>
+
+    <div class="card">
+      <h2>Tentukan Status Pemain</h2>
+      <div id="player-status-list"></div>
+    </div>
+
+    <div id="validation-box"></div>
+
+    <button class="btn-primary" id="btn-next-round" onclick="handleRoundButton()" disabled>LANJUT RONDE</button>
+
+    <div class="card" style="margin-top:20px;">
+      <h2>🏆 Scoreboard</h2>
+      <table>
+        <thead><tr><th>Pemain</th><th class="num">Skor</th><th class="num">Menang</th><th class="num">Kalah</th><th class="num">Netral</th></tr></thead>
+        <tbody id="scoreboard-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Ronde</h2>
+      <div id="history-list"></div>
+    </div>
+
+    <button class="btn-ghost" onclick="askNewGame()">Mulai Game Baru</button>
+  </section>
+
+  <!-- FINISHED SCREEN -->
+  <section id="screen-finished" class="screen">
+    <div class="card" style="text-align:center;">
+      <h2 style="font-size:20px;margin-bottom:4px;">GAME SELESAI 🎉</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0;">Total <span id="final-rounds">0</span> ronde dimainkan</p>
+    </div>
+
+    <div class="card">
+      <h2>Peringkat Akhir</h2>
+      <div id="final-ranking"></div>
+    </div>
+
+    <div class="card">
+      <h2>Riwayat Ronde</h2>
+      <div id="final-history"></div>
+    </div>
+
+    <button class="btn-primary" onclick="askNewGame()">NEW GAME</button>
+  </section>
+
+</div>
+
+<script>
+/* ======================= STATE ======================= */
+const STORAGE_KEY = 'gapleScoreState_v1';
+const SCORE_RULES = { win: 1, lose: -1, neutral: 0 };
+
+let gameState = null;
+let selectedRounds = 10;
+let pendingStatuses = {}; // { playerIndex: 'win'|'lose'|'neutral' }
+
+function defaultState(){
+  return {
+    players: [
+      { name:'Pemain 1', score:0, wins:0, losses:0, neutral:0 },
+      { name:'Pemain 2', score:0, wins:0, losses:0, neutral:0 },
+      { name:'Pemain 3', score:0, wins:0, losses:0, neutral:0 },
+      { name:'Pemain 4', score:0, wins:0, losses:0, neutral:0 }
+    ],
+    totalRounds: 10,
+    currentRound: 1,
+    history: [],
+    status: 'setup' // setup | playing | finished
+  };
+}
+
+/* ======================= PERSISTENCE ======================= */
+function saveGame(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  }catch(e){
+    console.error('Gagal menyimpan data game:', e);
+  }
+}
+
+function loadGame(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.players) || parsed.players.length !== 4) return null;
+    return parsed;
+  }catch(e){
+    console.error('Gagal memuat data game:', e);
+    return null;
+  }
+}
+
+/* ======================= SCREEN CONTROL ======================= */
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  document.getElementById('screen-' + name).classList.add('visible');
+}
+
+/* ======================= SHARED HELPERS ======================= */
+// Jalankan `action` hanya jika user menyetujui dialog konfirmasi.
+function confirmAction(message, action){
+  if(confirm(message)) action();
+}
+
+// Set ulang pilihan chip jumlah ronde ke default (10 ronde).
+function activateDefaultRoundChip(){
+  document.querySelectorAll('.round-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.round-chip[data-rounds="10"]').classList.add('active');
+}
+
+/* ======================= INIT ======================= */
+window.addEventListener('DOMContentLoaded', init);
+
+function init(){
+  document.querySelectorAll('.round-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.round-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedRounds = parseInt(chip.dataset.rounds, 10);
+      document.getElementById('input-custom-rounds').value = '';
+    });
+  });
+  document.getElementById('input-custom-rounds').addEventListener('input', (e) => {
+    if(e.target.value){
+      document.querySelectorAll('.round-chip').forEach(c => c.classList.remove('active'));
+      selectedRounds = null;
+    }
+  });
+
+  const saved = loadGame();
+  if(saved && saved.status === 'playing'){
+    gameState = saved;
+    showScreen('resume');
+  } else if(saved && saved.status === 'finished'){
+    gameState = saved;
+    renderFinalResult();
+    showScreen('finished');
+  } else {
+    gameState = defaultState();
+    activateDefaultRoundChip();
+    showScreen('setup');
+  }
+}
+
+function resumeGame(){
+  pendingStatuses = {};
+  renderPlayerStatusList();
+  renderScoreboard();
+  renderRoundHistory();
+  updateRoundHeader();
+  validateRound();
+  showScreen('playing');
+}
+
+function confirmNewFromResume(){
+  confirmAction('Mulai game baru? Data game saat ini akan dihapus.', () => {
+    localStorage.removeItem(STORAGE_KEY);
+    gameState = defaultState();
+    activateDefaultRoundChip();
+    showScreen('setup');
+  });
+}
+
+/* ======================= START GAME ======================= */
+function startGame(){
+  const names = [];
+  for(let i=0;i<4;i++){
+    const val = document.getElementById('input-name-' + i).value.trim();
+    if(!val){
+      alert('Nama Pemain ' + (i+1) + ' harus diisi.');
+      document.getElementById('input-name-' + i).focus();
+      return;
+    }
+    names.push(val);
+  }
+
+  const customVal = document.getElementById('input-custom-rounds').value;
+  let totalRounds = selectedRounds;
+  if(customVal){
+    const n = parseInt(customVal, 10);
+    if(!n || n < 1){
+      alert('Jumlah ronde custom harus lebih dari 0.');
+      return;
+    }
+    totalRounds = n;
+  }
+  if(!totalRounds){
+    alert('Silakan pilih jumlah ronde terlebih dahulu.');
+    return;
+  }
+
+  gameState = defaultState();
+  gameState.players.forEach((p, i) => p.name = names[i]);
+  gameState.totalRounds = totalRounds;
+  gameState.currentRound = 1;
+  gameState.status = 'playing';
+
+  pendingStatuses = {};
+  saveGame();
+
+  renderPlayerStatusList();
+  renderScoreboard();
+  renderRoundHistory();
+  updateRoundHeader();
+  validateRound();
+  showScreen('playing');
+}
+
+/* ======================= ROUND PLAY ======================= */
+function updateRoundHeader(){
+  document.getElementById('round-current').textContent = gameState.currentRound;
+  document.getElementById('round-total').textContent = gameState.totalRounds;
+  const btn = document.getElementById('btn-next-round');
+  btn.textContent = (gameState.currentRound >= gameState.totalRounds) ? 'SELESAI GAME' : 'LANJUT RONDE';
+}
+
+function renderPlayerStatusList(){
+  const container = document.getElementById('player-status-list');
+  container.innerHTML = '';
+  gameState.players.forEach((player, idx) => {
+    const status = pendingStatuses[idx] || null;
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <div class="player-name">${escapeHtml(player.name)}</div>
+      <div class="status-btns">
+        <button type="button" class="status-btn win ${status==='win'?'active':''}" onclick="selectPlayerStatus(${idx}, 'win')" title="Menang">🏆</button>
+        <button type="button" class="status-btn lose ${status==='lose'?'active':''}" onclick="selectPlayerStatus(${idx}, 'lose')" title="Kalah">❌</button>
+        <button type="button" class="status-btn neutral ${status==='neutral'?'active':''}" onclick="selectPlayerStatus(${idx}, 'neutral')" title="Netral">⚪</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function selectPlayerStatus(playerIndex, status){
+  if(pendingStatuses[playerIndex] === status){
+    delete pendingStatuses[playerIndex];
+  } else {
+    pendingStatuses[playerIndex] = status;
+  }
+  renderPlayerStatusList();
+  validateRound();
+}
+
+function validateRound(){
+  const values = Object.values(pendingStatuses);
+  const wins = values.filter(v => v === 'win').length;
+  const losses = values.filter(v => v === 'lose').length;
+  const neutrals = values.filter(v => v === 'neutral').length;
+  const totalSet = Object.keys(pendingStatuses).length;
+
+  const box = document.getElementById('validation-box');
+  const btn = document.getElementById('btn-next-round');
+  let valid = (wins === 1 && losses === 1 && neutrals === 2 && totalSet === 4);
+
+  if(valid){
+    box.innerHTML = '<div class="validation-msg ok">Kombinasi status valid ✓</div>';
+    btn.disabled = false;
+  } else {
+    let msg = 'Pilih status: tepat 1 Menang, 1 Kalah, 2 Netral.';
+    if(totalSet < 4) msg = `Lengkapi status semua pemain (${totalSet}/4 terisi).`;
+    else if(wins !== 1) msg = `Harus tepat 1 pemenang (saat ini ${wins}).`;
+    else if(losses !== 1) msg = `Harus tepat 1 kalah (saat ini ${losses}).`;
+    else if(neutrals !== 2) msg = `Harus tepat 2 netral (saat ini ${neutrals}).`;
+    box.innerHTML = `<div class="validation-msg">${msg}</div>`;
+    btn.disabled = true;
+  }
+  return valid;
+}
+
+function handleRoundButton(){
+  if(!validateRound()) return;
+  finishRound();
+  if(gameState.currentRound >= gameState.totalRounds){
+    finishGame();
+  } else {
+    nextRound();
+  }
+}
+
+function finishRound(){
+  // apply scores + record history entry
+  const entry = { round: gameState.currentRound, results: [] };
+  gameState.players.forEach((player, idx) => {
+    const status = pendingStatuses[idx];
+    player.score += SCORE_RULES[status];
+    if(status === 'win') player.wins++;
+    else if(status === 'lose') player.losses++;
+    else player.neutral++;
+    entry.results.push({ name: player.name, status });
+  });
+  gameState.history.push(entry);
+  saveGame();
+  renderScoreboard();
+  renderRoundHistory();
+}
+
+function nextRound(){
+  gameState.currentRound++;
+  pendingStatuses = {};
+  saveGame();
+  renderPlayerStatusList();
+  updateRoundHeader();
+  validateRound();
+}
+
+function finishGame(){
+  gameState.status = 'finished';
+  saveGame();
+  renderFinalResult();
+  showScreen('finished');
+}
+
+/* ======================= RENDER: SCOREBOARD ======================= */
+function scoreClass(score){
+  if(score > 0) return 'pos';
+  if(score < 0) return 'neg';
+  return 'zero';
+}
+function formatScore(score){
+  if(score > 0) return '+' + score;
+  return String(score);
+}
+
+function renderScoreboard(){
+  const body = document.getElementById('scoreboard-body');
+  body.innerHTML = '';
+  gameState.players.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(p.name)}</td>
+      <td class="num score-cell ${scoreClass(p.score)}">${formatScore(p.score)}</td>
+      <td class="num">${p.wins}</td>
+      <td class="num">${p.losses}</td>
+      <td class="num">${p.neutral}</td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+/* ======================= RENDER: HISTORY ======================= */
+function statusLabel(status){
+  if(status === 'win') return { text:'Menang', cls:'win' };
+  if(status === 'lose') return { text:'Kalah', cls:'lose' };
+  return { text:'Netral', cls:'neutral' };
+}
+
+function renderRoundHistory(){
+  renderHistoryInto('history-list');
+}
+function renderHistoryIntoFinal(){
+  renderHistoryInto('final-history');
+}
+
+function renderHistoryInto(containerId){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  if(gameState.history.length === 0){
+    container.innerHTML = '<p style="font-size:13px;color:var(--ink-soft);margin:0;">Belum ada ronde yang dimainkan.</p>';
+    return;
+  }
+  // newest first for readability
+  [...gameState.history].reverse().forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const rows = entry.results.map(r => {
+      const lbl = statusLabel(r.status);
+      return `<div class="history-entry">${escapeHtml(r.name)} <span class="history-tag ${lbl.cls}">${lbl.text}</span></div>`;
+    }).join('');
+    item.innerHTML = `<div class="history-title">Ronde ${entry.round}</div><div class="history-grid">${rows}</div>`;
+    container.appendChild(item);
+  });
+}
+
+/* ======================= RENDER: FINAL RESULT ======================= */
+function renderFinalResult(){
+  document.getElementById('final-rounds').textContent = gameState.history.length;
+
+  const ranking = document.getElementById('final-ranking');
+  ranking.innerHTML = '';
+
+  const sorted = [...gameState.players].sort((a,b) => b.score - a.score);
+
+  // compute rank positions accounting for ties
+  let currentRank = 1;
+  const withRank = sorted.map((p, idx) => {
+    if(idx > 0 && p.score === sorted[idx-1].score){
+      // same rank as previous
+    } else {
+      currentRank = idx + 1;
+    }
+    return { ...p, rank: currentRank };
+  });
+
+  const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+
+  withRank.forEach((p, idx) => {
+    const tiedCount = withRank.filter(x => x.rank === p.rank).length;
+    const card = document.createElement('div');
+    card.className = 'rank-card' + (p.rank === 1 ? ' top' : '');
+    const medal = medals[p.rank] || ('#' + p.rank);
+    card.innerHTML = `
+      <div class="rank-medal">${medal}</div>
+      <div class="rank-info">
+        <div class="rank-name">${escapeHtml(p.name)}</div>
+        <div class="rank-stats">Menang: ${p.wins} &nbsp;·&nbsp; Kalah: ${p.losses} &nbsp;·&nbsp; Netral: ${p.neutral}</div>
+        ${tiedCount > 1 ? '<div class="tie-note">Seri dengan ' + (tiedCount-1) + ' pemain lain</div>' : ''}
+      </div>
+      <div class="rank-score ${scoreClass(p.score)}">${formatScore(p.score)}</div>
+    `;
+    ranking.appendChild(card);
+  });
+
+  renderHistoryIntoFinal();
+}
+
+/* ======================= NEW GAME / RESET ======================= */
+function askNewGame(){
+  confirmAction('Mulai game baru? Data game saat ini akan dihapus.', newGame);
+}
+
+function newGame(){
+  localStorage.removeItem(STORAGE_KEY);
+  gameState = defaultState();
+  pendingStatuses = {};
+  for(let i = 0; i < 4; i++){
+    document.getElementById('input-name-' + i).value = '';
+  }
+  document.getElementById('input-custom-rounds').value = '';
+  activateDefaultRoundChip();
+  selectedRounds = 10;
+  showScreen('setup');
+}
+
+/* ======================= UTIL ======================= */
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
 </html>
